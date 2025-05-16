@@ -7,7 +7,7 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://uel0tb2voc0oihxz:FXpmmqiKtzSUgT5O8LrH@bs0jleesc83xw0iulp13-mysql.services.clever-cloud.com:3306/bs0jleesc83xw0iulp13'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://uel0tb2voc0oihxz:FXpmmqiKtzSUgT5O8LrH@bs0jleesc83xw0iulp13-mysql.services.clever-cloud.com:3306/bs0jleesc83xw0iulp13'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
