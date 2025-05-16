@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        background-image: url('https://pluspng.com/img-png/png-lost-and-found-lost-and-found-1788.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+    }
+
+    .card {
+        background-color: rgba(255, 255, 255, 0.7); /* Frosted glass look */
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .card:hover {
+        transform: translateY(-3px);
+    }
+</style>
+
+<div class="container my-5 d-flex justify-content-center">
+    <div class="card shadow-sm p-4" style="max-width: 700px; width: 100%;">
+        <h3 class="text-center mb-4">Post an Item</h3>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="item_type" class="form-label">Type</label>
+                <select class="form-select" name="item_type" id="item_type" required onchange="toggleAnswers()">
+                    <option value="lost">Lost</option>
+                    <option value="found">Found</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control" name="title" placeholder="Item title" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3" placeholder="Describe the item..." required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Category</label>
+                <select class="form-select" name="category" required>
+                    <option value="electronics">Electronics</option>
+                    <option value="documents">Documents</option>
+                    <option value="accessories">Accessories</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="others">Others</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Contact Info</label>
+                <input type="text" class="form-control" name="contact_info" placeholder="Email or phone number" required>
+            </div>
+
+            <div id="qa-section">
+                <label class="form-label">Security Questions (for Lost Items)</label>
+                <div id="qa-container">
+                    <div class="row g-2 mb-2 qa-pair">
+                        <div class="col-12 col-md-6">
+                            <input type="text" name="questions[]" class="form-control" placeholder="Enter a question" required>
+                        </div>
+                        <div class="col-12 col-md-6 answer-field">
+                            <input type="text" name="answers[]" class="form-control" placeholder="Enter the answer" required>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addQA()">+ Add More</button>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Image (optional)</label>
+                <input type="file" class="form-control" name="image">
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Post Item</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function addQA() {
+        const container = document.getElementById('qa-container');
+        const div = document.createElement('div');
+        div.className = 'row g-2 mb-2 qa-pair';
+        div.innerHTML = `
+            <div class="col-12 col-md-6">
+                <input type="text" name="questions[]" class="form-control" placeholder="Enter a question" required>
+            </div>
+            <div class="col-12 col-md-6 answer-field">
+                <input type="text" name="answers[]" class="form-control" placeholder="Enter the answer" required>
+            </div>
+        `;
+        container.appendChild(div);
+        toggleAnswers();
+    }
+
+    function toggleAnswers() {
+        const itemType = document.getElementById('item_type').value;
+        const answerFields = document.querySelectorAll('.answer-field input');
+
+        if (itemType === 'found') {
+            answerFields.forEach(input => {
+                input.value = '';
+                input.required = false;
+                input.closest('.answer-field').style.display = 'none';
+            });
+        } else {
+            answerFields.forEach(input => {
+                input.required = true;
+                input.closest('.answer-field').style.display = '';
+            });
+        }
+    }
+
+    window.onload = toggleAnswers;
+</script>
+{% endblock %}

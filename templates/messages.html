@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-7">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-primary text-white text-center py-3 rounded-top-4">
+            <h2 class="mb-0">Messages for {{ item.title }}</h2>
+        </div>
+        <div class="card-body">
+            <!-- Restrict access to messages -->
+            {% if current_user.id == item.user_id or current_user.id == item.allowed_user_id %}
+            
+            <!-- Display Messages -->
+            <div class="messages mb-5">
+                {% for message in messages %}
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body bg-light rounded-3">
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            <strong>From:</strong> {{ message.sender.username }} <span class="badge bg-info ms-2">{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </h6>
+                        <p class="card-text text-dark">{{ message.content }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Send Message Form -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <form id="sendMessageForm">
+                        <input type="hidden" name="receiver_id" value="{% if current_user.id == item.user_id %}{{ item.allowed_user_id }}{% else %}{{ item.user_id }}{% endif %}">
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        <div class="mb-3">
+                            <textarea name="content" class="form-control" rows="3" placeholder="Type your message..." required></textarea>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Send Message</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-danger mt-4">You are not authorized to view these messages.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('sendMessageForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch("{{ url_for('send_message') }}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert('Failed to send message: ' + data.message);
+        }
+    });
+});
+</script>
+{% endblock %}

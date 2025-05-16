@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 rounded">
+                <div class="card-header bg-primary text-white text-center fw-bold">Item Details</div>
+                <div class="card-body p-3">
+                    {% if item.image_filename %}
+                    <div class="text-center">
+                        <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" 
+                             class="card-img-top img-fluid rounded mb-2" 
+                             style="max-height: 350px; object-fit: contain; width: 100%;" 
+                             alt="{{ item.title }}">
+                    </div>
+                    {% endif %}
+                    
+                    {% if item.claimed %}
+                    <div class="alert alert-success">
+                        This item has been claimed by {{ item.claimer.username }} on {{ item.claimed_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                    {% endif %}
+                    
+                    <h5 class="card-title text-primary fw-bold">{{ item.title }}</h5>
+                    <p class="card-text text-muted">{{ item.description }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            <strong>Category:</strong> {{ item.category }} <br>
+                            <strong>Type:</strong> 
+                            <span class="badge {% if item.item_type == 'lost' %}bg-danger{% else %}bg-success{% endif %}">
+                                {{ item.item_type|capitalize }}
+                            </span>
+                        </small>
+                    </p>
+
+                    <hr>
+
+                    {% if item.item_type == 'found' and not item.contact_shared and not item.claimed %}
+                    <h6 class="text-secondary">Security Questions</h6>
+                    <form id="answerForm" class="mb-3">
+                        {% for question in item.questions %}
+                        <div class="mb-2">
+                            <label class="form-label small">{{ question }}</label>
+                            <input type="text" name="answers[]" class="form-control form-control-sm" required>
+                        </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Submit Answers</button>
+                    </form>
+
+                    <div id="responseMessage" class="alert alert-info p-2 text-center small d-none"></div>
+                    {% endif %}
+
+                    {% if item.item_type == 'found' and current_user.id == item.user_id and item.pending_answers and not item.claimed %}
+                    <div id="reviewAnswersSection">
+                        <h6 class="text-secondary">Review Submitted Answers</h6>
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Question</th>
+                                    <th>Submitted Answer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in range(item.questions|length) %}
+                                <tr>
+                                    <td>{{ item.questions[i] }}</td>
+                                    <td>{{ item.pending_answers[i] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <button id="allowContactButton" class="btn btn-sm btn-success w-49">Allow Contact</button>
+                        <button id="denyContactButton" class="btn btn-sm btn-danger w-49">Deny Contact</button>
+                    </div>
+                    {% endif %}
+
+                    {% if show_contact %}
+                    <div id="contactInfo" class="mt-3">
+                        <h6 class="text-secondary">Contact Information</h6>
+                        <p class="fw-bold">{{ item.contact_info }}</p>
+                        {% if current_user.id == item.allowed_user_id and not item.claimed %}
+                        <button id="claimButton" class="btn btn-success w-100 mb-2">Claim This Item</button>
+                        {% endif %}
+                        {% if current_user.id == item.allowed_user_id %}
+                        <a href="{{ url_for('view_messages', item_id=item.id) }}" class="btn btn-sm btn-primary w-100">Message {{ item.owner.username }}</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('answerForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch("{{ url_for('item_detail', item_id=item.id) }}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('responseMessage').textContent = data.message;
+            document.getElementById('responseMessage').classList.remove('d-none');
+        }
+    });
+});
+
+if (document.getElementById('allowContactButton')) {
+    document.getElementById('allowContactButton').addEventListener('click', function() {
+        fetch("{{ url_for('item_detail', item_id=item.id) }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'allow_contact=true'
+        }).then(response => response.json())
+          .then(data => { if (data.contact) window.location.reload(); });
+    });
+
+    document.getElementById('denyContactButton').addEventListener('click', function() {
+        fetch("{{ url_for('item_detail', item_id=item.id) }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'allow_contact=false'
+        }).then(response => response.json())
+          .then(data => { if (data.message) window.location.reload(); });
+    });
+}
+
+document.getElementById('claimButton')?.addEventListener('click', function() {
+    fetch("{{ url_for('claim_item', item_id=item.id) }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+});
+</script>
+{% endblock %}

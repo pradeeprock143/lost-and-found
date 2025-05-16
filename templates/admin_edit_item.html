@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+    .edit-card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        margin-bottom: 15px;
+    }
+    .qa-pair {
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="edit-card">
+        <h2 class="mb-4">Edit Item</h2>
+        
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">Type</label>
+                <select class="form-select" name="item_type" required>
+                    <option value="lost" {% if item.item_type == 'lost' %}selected{% endif %}>Lost</option>
+                    <option value="found" {% if item.item_type == 'found' %}selected{% endif %}>Found</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control" name="title" value="{{ item.title }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3" required>{{ item.description }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Category</label>
+                <select class="form-select" name="category" required>
+                    <option value="electronics" {% if item.category == 'electronics' %}selected{% endif %}>Electronics</option>
+                    <option value="documents" {% if item.category == 'documents' %}selected{% endif %}>Documents</option>
+                    <option value="accessories" {% if item.category == 'accessories' %}selected{% endif %}>Accessories</option>
+                    <option value="clothing" {% if item.category == 'clothing' %}selected{% endif %}>Clothing</option>
+                    <option value="other" {% if item.category == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Contact Info</label>
+                <input type="text" class="form-control" name="contact_info" value="{{ item.contact_info }}" required>
+            </div>
+
+            <div class="mb-3" id="qa-section">
+                <label class="form-label">Security Questions & Answers</label>
+                <div id="qa-container">
+                    {% for i in range(item.questions|length) %}
+                    <div class="row g-2 mb-2 qa-pair">
+                        <div class="col-12 col-md-6">
+                            <input type="text" name="questions[]" class="form-control" 
+                                   value="{{ item.questions[i] }}" placeholder="Question" required>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <input type="text" name="answers[]" class="form-control" 
+                                   value="{{ item.answers[i] if item.answers else '' }}" placeholder="Answer" 
+                                   {% if item.item_type == 'lost' %}required{% endif %}>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addQA()">+ Add More</button>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Current Image</label>
+                {% if item.image_filename %}
+                    <div>
+                        <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" 
+                             class="image-preview img-thumbnail">
+                    </div>
+                {% else %}
+                    <p>No image uploaded</p>
+                {% endif %}
+                <label class="form-label">Update Image (optional)</label>
+                <input type="file" class="form-control" name="image">
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function addQA() {
+        const container = document.getElementById('qa-container');
+        const div = document.createElement('div');
+        div.className = 'row g-2 mb-2 qa-pair';
+        div.innerHTML = `
+            <div class="col-12 col-md-6">
+                <input type="text" name="questions[]" class="form-control" placeholder="Question" required>
+            </div>
+            <div class="col-12 col-md-6">
+                <input type="text" name="answers[]" class="form-control" placeholder="Answer">
+            </div>
+        `;
+        container.appendChild(div);
+    }
+</script>
+{% endblock %}
