@@ -7,7 +7,7 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://uel0tb2voc0oihxz:FXpmmqiKtzSUgT5O8LrH@bs0jleesc83xw0iulp13-mysql.services.clever-cloud.com:3306/bs0jleesc83xw0iulp13'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lost_and_found.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
@@ -22,32 +22,32 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# FIXED LOGIN ROUTE
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+@app.route('/')
+@login_required
+def index():
+    items = Item.query.order_by(Item.created_at.desc()).all()
+    return render_template('index.html', items=items)
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        try:
-            username = request.form['username']
-            password = request.form['password']
-            user = User.query.filter_by(username=username).first()
-
-            if user is None:
-                flash("Username not found.", "danger")
-                return redirect(url_for('login'))
-
-            if not user.check_password(password):
-                flash("Incorrect password.", "danger")
-                return redirect(url_for('login'))
-
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+        
+        if user and user.check_password(password):
             login_user(user)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('index'))
-
-        except Exception as e:
-            app.logger.error(f"Login error: {str(e)}")
-            flash("Internal server error during login.", "danger")
-            return redirect(url_for('login'))
-
+        return 'Invalid username or password'
+    
     return render_template('login.html', next=request.args.get('next'))
 
 @app.route('/signup', methods=['GET', 'POST'])
@@ -334,8 +334,6 @@ def admin_toggle_claim(item_id):
         db.session.rollback()
         app.logger.error(f"Error toggling claim status: {str(e)}")
         return jsonify({'success': False, 'message': 'Error updating claim status'}), 500
-
-
 
 if __name__ == '__main__':
     with app.app_context():
