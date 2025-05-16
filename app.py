@@ -335,7 +335,10 @@ def admin_toggle_claim(item_id):
         app.logger.error(f"Error toggling claim status: {str(e)}")
         return jsonify({'success': False, 'message': 'Error updating claim status'}), 500
 
+
+
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
+        db.create_all()  # ✅ This creates all tables in your MySQL DB
     app.run(debug=True, port=5001)
+
